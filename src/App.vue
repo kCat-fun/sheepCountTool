@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import Swal from 'sweetalert2';
 
 import _errorSound from '~/assets/sounds/error-sound.mp3'
 import _countUpSound from '~/assets/sounds/count-up-sound.mp3'
@@ -38,9 +39,9 @@ const countRecordingSheepCount = () => {
       for (let i = event.resultIndex; i < results.length; i++) {
         const transcript = results[i][0].transcript;
         if (transcript != '') {
-          result.value += transcript + ", ";
+          result.value = transcript;
         }
-        if (transcript.includes('羊')) {
+        if ((transcript.includes('羊が') || transcript.includes('ひつじが')) && transcript.includes('匹')) {
           const match = transcript.match(/\d+/);
           if (match) {
             const number = parseInt(match[0], 10);
@@ -49,7 +50,11 @@ const countRecordingSheepCount = () => {
               countUpSound.play();
             } else {
               errorSound.play();
-              alert('数え間違いです。\n' + number + '匹目ではなく、' + (sheepCount.value + 1) + '匹目です。');
+              Swal.fire({
+                icon: 'error',
+                title: '数え間違いです',
+                text: `${number}匹目ではなく、${sheepCount.value + 1}匹目です。`,
+              });
             }
           }
         }
@@ -71,13 +76,21 @@ const countRecordingSheepCount = () => {
         // 再試行
         recognition.start();
       } else {
-        alert('音声認識が停止しました。');
+        Swal.fire({
+          icon: 'warning',
+          title: 'エラー',
+          text: '音声認識が停止しました。',
+        });
       }
     };
   } catch (error) {
     recognition.stop();
     console.error(error);
-    alert(error);
+    Swal.fire({
+      icon: 'error',
+      title: 'エラー',
+      text: String(error),
+    });
   }
 };
 
