@@ -17,11 +17,13 @@ const recognition = new SpeechRecognition();
 // 言語設定を日本語に
 recognition.lang = 'ja-JP';
 // 解析中の結果を表示する
-recognition.interimResults = true;
+recognition.interimResults = false;
 // 認識のたびに継続的に結果を返す
 recognition.continuous = true;
 
 const result = ref('');
+
+let time: number = 0;
 
 const countRecordingSheepCount = () => {
   if (isCounting.value) {
@@ -40,14 +42,20 @@ const countRecordingSheepCount = () => {
         const transcript = results[i][0].transcript;
         if (transcript != '') {
           result.value = transcript;
+          console.log('認識結果:', transcript);
         }
         if ((transcript.includes('羊が') || transcript.includes('ひつじが')) && transcript.includes('匹')) {
           const match = transcript.match(/\d+/);
           if (match) {
             const number = parseInt(match[0], 10);
+            if (new Date().getTime() - time < 2000 && number !== sheepCount.value + 1) {
+              break;
+            }
+            time = new Date().getTime();
             if (number == sheepCount.value + 1) {
               sheepCount.value++;
               countUpSound.play();
+              break;
             } else {
               errorSound.play();
               Swal.fire({
